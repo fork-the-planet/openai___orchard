@@ -23,35 +23,14 @@ builds:
 
 archives:
   - id: binary
-    format: binary
+    formats:
+      - binary
     name_template: "{{ .ProjectName }}-{{ .Os }}-{{ .Arch }}"
   - id: regular
     name_template: "{{ .ProjectName }}-{{ .Os }}-{{ .Arch }}"
 
 release:
   prerelease: auto
-
-nfpms:
-  - package_name: orchard-controller
-    vendor: Cirrus Labs, Inc.
-    homepage: https://github.com/cirruslabs/orchard
-    maintainer: support@cirruslabs.org
-    description: Orchestrator for running Tart Virtual Machines on a cluster of Apple Silicon devices
-    section: misc
-    formats:
-      - deb
-      - rpm
-    contents:
-      - src: packaging/orchard-controller.service
-        dst: /lib/systemd/system/orchard-controller.service
-        type: config
-    scripts:
-      postinstall: packaging/postinstall.sh
-      preremove: packaging/preremove.sh
-      postremove: packaging/postremove.sh
-
-furies:
-  - account: cirruslabs
 
 notarize:
   macos:
@@ -64,17 +43,33 @@ notarize:
         key_id: "{{.Env.MACOS_NOTARY_KEY_ID}}"
         key: "{{.Env.MACOS_NOTARY_KEY}}"
 
+dockers_v2:
+  - images:
+      - ghcr.io/openai/orchard
+    tags:
+      - "{{ .Tag }}"
+      - latest
+    platforms:
+      - linux/amd64
+      - linux/arm64
+    disable: "{{ .IsSnapshot }}"
+
 brews:
   - name: orchard
+    directory: Formula
     ids:
       - regular
     repository:
-      owner: cirruslabs
-      name: homebrew-cli
+      owner: openai
+      name: homebrew-tools
+      token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
+      branch: "orchard-{{ .Version }}"
+      pull_request:
+        enabled: true
     install: |
       bin.install "orchard"
       generate_completions_from_executable(bin/"orchard", "completion")
     caveats: See the Github repository for more information
-    homepage: https://github.com/cirruslabs/orchard
+    homepage: https://github.com/openai/orchard
     description: Orchestrator for running Tart Virtual Machines on a cluster of Apple Silicon devices
     skip_upload: auto
